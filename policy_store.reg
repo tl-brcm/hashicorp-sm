@@ -1,0 +1,12 @@
+REGEDIT4  
+  
+[HKEY_LOCAL_MACHINE\SOFTWARE\Netegrity\SiteMinder\CurrentVersion\LdapPolicyStore]  
+"AdminDN"="uid=smadmin,ou=Admins,ou=policystore,o=SSO"  
+"AdminPW"="[new_password]"  
+"Enabled"=dword:00000001  
+"MaxConnections="=dword:0000000a  
+"Server"="[172.17.17.160:10389](http://172.17.17.160:10389/)"  
+"SSRootDN"="ou=policystore,o=SSO"  
+"Use Default"=dword:00000000  
+"Use SSL"=dword:00000000  
+"Version"="5.0" 
