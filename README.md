@@ -22,6 +22,8 @@ Before running these scripts, ensure you have the following installed:
 
 This script starts the HashiCorp Vault server in development mode and configures the LDAP secret engine. It sets up the connection to an LDAP server, enabling secure authentication and management of LDAP credentials through Vault.
 
+IMPORTANT: Do not run vault server in dev model for production use. This is for POC purpose and if you already have a vault running in prod mode, you dont have to run `start_vault_configure_ldap` script. 
+
 ### Usage
 
 Run the script with no arguments:
@@ -32,28 +34,36 @@ Run the script with no arguments:
 
 ## Update User Store Password from HashiCorp Vault
 
-`update_user_store.sh`
+`update_user_store_pw.sh`
 
 Automatically retrieves the latest user store password from HashiCorp Vault and updates the configuration accordingly. This script ensures that the user store password is kept secure and rotated according to best practices.
+
+Open the script to modify the variable based on your need, e.g. siteminder url, username, password, udo name, udo user and password etc. 
+
+NOTE: The script need to be run whenever the hashicorp password is rollover. You can integrate this to a cron job that poll vault changes with certain frequency, or subscribe to vault event and trigger the script if you are using enterpise edition. 
 
 ### Usage
 
 Ensure you have the correct path to your LDAP credentials in Vault defined in the script, then run:
 
 ```bash
-./update_user_store.sh
+./update_user_store_pw.sh
 ```
 
 ## Update Policy Store Password from HashiCorp Vault
 
-`update_policy_store.sh`
+`update_policy_store_pw.sh`
 
 Fetches the new policy store password from HashiCorp Vault and applies it to the policy store configuration. This script facilitates the secure and automated management of policy store passwords.
+
+Open the script to modify the variable based on your need, e.g. siteminder url, username, password, udo name, udo user and password etc. 
+
+NOTE: Run this script before the start up of policy server. 
 
 ### Usage
 
 Modify the script to include the correct path to your policy store credentials in Vault. Execute the script by running:
 
 ```bash
-./update_policy_store.sh
+./update_policy_store_pw.sh
 ```
