@@ -13,16 +13,16 @@ UPDATE_PASSWORD_ENDPOINT="/ca/api/sso/services/policy/v1/SmUserDirectories/"$USE
 LOGIN_URL="${HOST}${LOGIN_ENDPOINT}"
 UPDATE_PASSWORD_URL="${HOST}${UPDATE_PASSWORD_ENDPOINT}"
 
-# Modify this if you are using oracle or other stores
-LDAP_CRED_PATH="ustore-ldap/static-cred/ustore"
-LDAP_USER="uid=btaylor,ou=People,o=demo,c=us"
+# Modify this for Oracle database credentials
+ORACLE_CRED_PATH="database/creds/my-role"
+ORACLE_USER="btaylor"
 ACCEPT_HEADER="application/ecmascript"
 
 # Username and Password for the Authorization header
-USER="apiadmin:password" # Replace 'apiadmin:password' with actual username:password
+SM_ADMIN_USER="apiadmin:password" # Replace 'apiadmin:password' with actual username:password
 
 # Base64 encode the username:password and create the Authorization header
-AUTHORIZATION_HEADER="Basic $(echo -n $USER | base64)"
+AUTHORIZATION_HEADER="Basic $(echo -n $SM_ADMIN_USER | base64)"
 
 # Login to Siteminder to get the session key
 SESSION_RESPONSE=$(curl --location --request POST "$LOGIN_URL" \
@@ -61,16 +61,19 @@ else
   exit 1
 fi
 
-# Get the latest password from HashiCorp Vault
-VAULT_SECRET_URL="${VAULT_ADDR}/v1/${LDAP_CRED_PATH}"
-LDAP_PASSWORD=$(curl --insecure --header "X-Vault-Token: $VAULT_TOKEN" \
+# Get the latest Oracle database credentials from HashiCorp Vault
+VAULT_SECRET_URL="${VAULT_ADDR}/v1/${ORACLE_CRED_PATH}"
+ORACLE_CREDENTIALS=$(curl --insecure --header "X-Vault-Token: $VAULT_TOKEN" \
     --request GET \
-    $VAULT_SECRET_URL | jq -r ".data.password")
+    $VAULT_SECRET_URL)
 
-if [ -n "$LDAP_PASSWORD" ]; then
-  echo "LDAP password obtained successfully"
+ORACLE_USER=$(echo $ORACLE_CREDENTIALS | jq -r ".data.username")
+ORACLE_PASSWORD=$(echo $ORACLE_CREDENTIALS | jq -r ".data.password")
+
+if [ -n "$ORACLE_USER" ] && [ -n "$ORACLE_PASSWORD" ]; then
+  echo "Oracle credentials obtained successfully"
 else
-  echo "Failed to obtain LDAP password"
+  echo "Failed to obtain Oracle credentials"
   exit 1
 fi
 
@@ -80,8 +83,8 @@ UPDATE_RESPONSE=$(curl --location --request PUT "$UPDATE_PASSWORD_URL" \
 --header "Content-Type: application/json" \
 --header "Authorization: Bearer $SESSION_KEY" \
 --data "{
-    \"Username\": \"$LDAP_USER\",
-    \"Password\": \"$LDAP_PASSWORD\"
+    \"Username\": \"$ORACLE_USER\",
+    \"Password\": \"$ORACLE_PASSWORD\"
 }" -k)
 
 echo "Password update response: $UPDATE_RESPONSE"
