@@ -14,7 +14,6 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-
 # Function to authenticate with Vault using certificate and get a token
 vault_login() {
     local vault_login_url="${VAULT_ADDR}/v1/auth/cert/login"
@@ -48,18 +47,45 @@ if [ -z "$newPassword" ]; then
     exit 1
 fi
 
-# Use sed to replace the AdminPW line in the policy_store.reg file
+
+# Make a backup of the sm.registry
+cp $SITEMINDER_HOME/registry/sm.registry $SITEMINDER_HOME/registry/sm.registry.bak
+
+# This will write the password to the sm.retistry file. 
 smldapsetup reg -w$newPassword
+
+passwordEncrypted="{RC2}"$(grep -A5 LdapPolicyStore $SITEMINDER_HOME/registry/sm.registry | grep AdminPW | grep -oP '(?<=\{RC2\})[^; ]+')
+if [ $? -ne 0 ]; then
+    echo "Not able to get encrypted password from sm.registry file. Please check the file"
+    exit 1
+fi
+
+escapedPassword=$(printf '%s\n' "$passwordEncrypted" | sed -e 's/[\/&]/\\&/g')
+
+# Move the backup file back to the original one because not using LDAP password. 
+cp $SITEMINDER_HOME/registry/sm.registry.bak $SITEMINDER_HOME/registry/sm.registry
+
+# Use sed to replace the AdminPW line in the policy_store.reg file
+sed  "s/\[new_password\]/$escapedPassword/" policy_store.reg > policy_store_temp.reg
 
 # Check if sed command was successful
 if [ $? -ne 0 ]; then
-    echo "Failed to update the AdminPW in the policy_store."
+    echo "Failed to update the AdminPW in the policy_store.reg file."
     exit 1
+fi
+
+# Run smregimport to update the policy store password
+smregimport -f policy_store_temp.reg
+
+# Check if smregimport command was successful
+if [ $? -ne 0 ]; then
+    echo "smregimport command failed."
+    # Even if smregimport fails, we proceed to delete the temp file for security
 fi
 
 # Securely delete the policy_store_temp.reg file for security purposes
 # This will happen no matter whether the previous step is successful or not
-# rm -f policy_store_temp.reg
+rm -f policy_store_temp.reg
 
 # Final success message
 echo "Policy store password update process completed."

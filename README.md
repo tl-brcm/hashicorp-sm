@@ -32,6 +32,13 @@ Run the script with no arguments:
 ./start_vault_configure_ldap.sh
 ```
 
+## Test Vault login
+`test_vault_cert_login.sh`
+
+Update the script with the certifcate path and vault URL, and test login. This step is required before moving to next steps. Once it's working, copy the variable values to the scripts that you need to run. 
+
+
+
 ## Update User Store Password from HashiCorp Vault
 
 `update_user_store_pw.sh`
@@ -57,6 +64,8 @@ Ensure you have the correct path to your LDAP credentials in Vault defined in th
 Fetches the new policy store password from HashiCorp Vault and applies it to the policy store configuration. This script facilitates the secure and automated management of policy store passwords.
 
 Open the script to modify the variable based on your need, e.g. siteminder url, username, password, udo name, udo user and password etc. 
+
+Make sure the policy store admin user in your registry is the same as the one from the password vault. 
 
 NOTE: Run this script before the start up of policy server. 
 
